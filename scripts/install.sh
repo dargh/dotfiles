@@ -5,7 +5,7 @@ set -e
 GREEN='\033[0;32m'; YELLOW='\033[0;33m'; RED='\033[0;31m'
 BLUE='\033[0;34m'; MAGENTA='\033[0;35m'; CYAN='\033[0;36m'; NC='\033[0m'
 declare -A ICONS
-ICONS=( ["system"]="⚙️" ["zsh"]="⚡" ["brew"]="🍺" ["apps"]="📦" ["font"]="🎨" ["dots"]="🔗" ["summary"]="📜" )
+ICONS=( ["system"]="⚙️" ["zsh"]="⚡" ["brew"]="🍺" ["apps"]="📦" ["font"]="🎨" ["dots"]="🔗" ["nvim"]=" V " ["summary"]="📜" )
 
 log_step() { local step="$1"; local msg="$2"; local icon="${ICONS[$step]}"; [ -z "$icon" ] && icon="ℹ️"; echo -e "\n$(date '+%H:%M:%S') $icon ${BLUE}$msg${NC}"; }
 ok() { echo -e "$(date '+%H:%M:%S') ✅ ${GREEN}$1${NC}"; }
@@ -18,7 +18,7 @@ DOTFILES_REPO=""
 ZSH_CUSTOM_DIR="$HOME/.oh-my-zsh/custom"
 DOTFILES_DIR="$HOME/.dotfiles"
 
-# --- NOUVELLE FONCTION : INVITE INTERACTIVE POUR L'URL ---
+# --- 0. FONCTION : INVITE INTERACTIVE POUR L'URL ---
 function get_dotfiles_repo_url() {
     log_step "dots" "Configuration de l'accès au dépôt privé (HTTPS/PAT)..."
     
@@ -160,15 +160,13 @@ function install_apps() {
 function deploy_dotfiles() {
     log_step "dots" "Clonage et déploiement du dépôt dotfiles."
     
-    # S'assure que l'URL a été définie par la fonction interactive
     if [ -z "$DOTFILES_REPO" ]; then
-        error "L'URL du dépôt n'a pas été configurée. Appel manquant à get_dotfiles_repo_url."
+        error "L'URL du dépôt n'a pas été configurée."
     fi
 
     # 1. Clonage ou mise à jour
     if [ -d "$DOTFILES_DIR" ]; then
         log_step "dots" "Mise à jour du dépôt dotfiles existant..."
-        # Le 'git remote set-url' est utilisé pour s'assurer que l'authentification est toujours correcte
         (cd "$DOTFILES_DIR" && git remote set-url origin "$DOTFILES_REPO" && git pull) || warn "Échec de la mise à jour du dépôt. Vérifiez vos identifiants."
     else
         log_step "dots" "Clonage du dépôt dotfiles..."
@@ -183,11 +181,35 @@ function deploy_dotfiles() {
     ok "Dotfiles déployés."
 }
 
+# --- 6. FONCTION : SYNCHRONISATION DES PLUGINS NEOPIM ---
+function sync_nvim_plugins() {
+    log_step "nvim" "Synchronisation des plugins Neovim (PackerSync)..."
+    
+    NVIM_BIN=$(command -v nvim || echo "")
+    PACKER_DIR="$HOME/.local/share/nvim/site/pack/packer/start/packer.nvim"
+    
+    # 1. Vérification de Packer.nvim
+    if [ ! -d "$PACKER_DIR" ]; then 
+        log_step "nvim" "Installation de Packer.nvim..."
+        git clone --depth 1 https://github.com/wbthomason/packer.nvim "$PACKER_DIR" || warn "Impossible d'installer Packer.nvim."
+    else
+        ok "Packer.nvim déjà présent."
+    fi
+
+    # 2. Lancement de PackerSync en mode headless
+    if [ -n "$NVIM_BIN" ]; then
+        # On exécute nvim pour installer les plugins
+        "$NVIM_BIN" --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync' || error "Échec de PackerSync. Vérifiez votre configuration Lua."
+        ok "Synchronisation Packer terminée. Les plugins sont installés."
+    else
+        warn "Binaire Neovim non trouvé. Synchronisation des plugins ignorée."
+    fi
+}
+
 # --- EXÉCUTION PRINCIPALE ---
 echo
 log_step "system" "=== Début du provisioning de la machine Debian ==="
 
-# On demande les identifiants au début, avant de cloner quoi que ce soit.
 get_dotfiles_repo_url
 
 update_system
@@ -195,9 +217,10 @@ install_zsh
 setup_homebrew
 install_apps
 deploy_dotfiles
+sync_nvim_plugins # NOUVEL APPEL
 
 log_step "summary" "✅ Provisioning terminé avec succès !"
 echo
 echo -e "${CYAN}Actions requises :${NC}"
-echo -e "  1. ${YELLOW}Fermez et rouvrez votre terminal${NC} pour charger Zsh et la nouvelle configuration."
+echo -e "  1. ${YELLOW}Fermez et rouvrez votre terminal${NC} pour charger Zsh et la nouvelle configuration (ou exécutez ${GREEN}source ~/.zshrc${NC})."
 echo -e "  2. Configurez la police ${YELLOW}FiraCode Nerd Font${NC} dans votre terminal graphique."
