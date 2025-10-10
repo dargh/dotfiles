@@ -115,27 +115,48 @@ function setup_homebrew() {
 function install_apps() {
     log_step "apps" "Installation des dépendances, polices et outils..."
 
-    DEPS=(curl git unzip fontconfig npm build-essential)
-    log_step "apps" "Installation des dépendances système..."
-    sudo apt update -qq
-    sudo apt install -y "${DEPS[@]}" || error "Impossible d'installer les dépendances APT."
-    ok "Dépendances système vérifiées."
-    
-    TOOLS=(neovim zoxide starship bat lazygit lsd fzf ripgrep btop fd duf gdu atuin procs tlrc)
-    log_step "apps" "Installation des outils via Homebrew..."
-    for tool in "${TOOLS[@]}"; do
-        if brew list "$tool" &>/dev/null; then
-            ok "$tool déjà présent"
+    # Dépendances système (APT)
+    APT_PACKAGES_FILE="$DOTFILES_DIR/packages.apt"
+    if [ -f "$APT_PACKAGES_FILE" ]; then
+        log_step "apps" "Installation des dépendances système (APT)..."
+        sudo apt update -qq
+        # xargs lit chaque ligne du fichier et les passe comme arguments à 'sudo apt install -y'
+        if grep -vE '^\s*#|^\s*$' "$APT_PACKAGES_FILE" | xargs sudo apt install -y ; then
+            ok "Dépendances APT installées."
         else
-            log_step "apps" "Installation de $tool..."
-            if brew install "$tool"; then
-                ok "$tool installé"
-            else
-                warn "Échec de l'installation de $tool."
-            fi
+            error "Impossible d'installer les dépendances APT."
         fi
-    done
+    else
+        warn "Fichier packages.apt non trouvé. Dépendances APT ignorées."
+    fi
+    
+    # Outils via Homebrew
+    BREW_PACKAGES_FILE="$DOTFILES_DIR/packages.brew"
+    if [ -f "$BREW_PACKAGES_FILE" ]; then
+        log_step "apps" "Installation des outils via Homebrew..."
+        # On lit chaque outil et on l'installe
+        while read -r tool; do
+            # Ignorer les lignes vides ou commentées
+            if [[ "$tool" =~ ^\s*#.*$ ]] || [[ -z "$tool" ]]; then
+                continue
+            fi
+            
+            if brew list "$tool" &>/dev/null; then
+                ok "$tool déjà présent"
+            else
+                log_step "apps" "Installation de $tool..."
+                if brew install "$tool"; then
+                    ok "$tool installé"
+                else
+                    warn "Échec de l'installation de $tool."
+                fi
+            fi
+        done < <(grep -vE '^\s*#|^\s*$' "$BREW_PACKAGES_FILE")
+    else
+        warn "Fichier packages.brew non trouvé. Installation Homebrew ignorée."
+    fi
 
+    # Installation de la police FiraCode Nerd Font (Logique inchangée)
     FONT_DIR="$HOME/.local/share/fonts"
     log_step "font" "Installation de la police FiraCode Nerd Font..."
     if [ -d "$FONT_DIR/FiraCode" ]; then
@@ -147,6 +168,7 @@ function install_apps() {
         ok "Police FiraCode installée."
     fi
 
+    # Installation du serveur LSP Bash (Logique inchangée)
     log_step "apps" "Installation du serveur LSP Bash..."
     if ! command -v "bash-language-server" &>/dev/null; then
         sudo npm install -g bash-language-server || error "Impossible d'installer bash-language-server."
