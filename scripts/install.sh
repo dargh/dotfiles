@@ -199,26 +199,28 @@ function install_zsh() {
     fi
 }
 
-# --- 7. FONCTION : INSTALLATION DES PLUGINS ZSH (Correction de l'erreur) ---
+# --- 7. FONCTION : INSTALLATION DES PLUGINS ZSH ---
 function install_zsh_plugins() {
-    log_step "zsh" "Installation des plugins Zsh supplémentaires (Autosuggestions/Syntax Highlighting)..."
+    log_step "zsh" "Installation des plugins Zsh supplémentaires..."
 
     local plugins_dir="$HOME/.oh-my-zsh/custom/plugins"
     mkdir -p "$plugins_dir" || error "Impossible de créer le répertoire des plugins Zsh."
 
-    # Plugins externes à Oh My Zsh
-    local plugins=(
-        "zsh-users/zsh-autosuggestions.git"
-        "zsh-users/zsh-syntax-highlighting.git"
+    # Liste des plugins externes à cloner
+    declare -A plugins_repos=(
+        ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions.git"
+        ["zsh-syntax-highlighting"]="https://github.com/zsh-users/zsh-syntax-highlighting.git"
+        ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab.git"
+        ["zsh-completions"]="https://github.com/zsh-users/zsh-completions.git"
     )
 
-    for repo in "${plugins[@]}"; do
-        local name=$(basename "$repo" .git)
+    for name in "${!plugins_repos[@]}"; do
+        local repo="${plugins_repos[$name]}"
         local path="$plugins_dir/$name"
         
         if [ ! -d "$path" ]; then
             log_step "zsh" "Clonage de $name..."
-            git clone --depth=1 "https://github.com/$repo" "$path" || warn "Échec du clonage de $name."
+            git clone --depth=1 "$repo" "$path" || warn "Échec du clonage de $name."
         else
             ok "$name déjà présent."
         fi
