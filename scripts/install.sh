@@ -256,11 +256,17 @@ function install_nvim_toolchain() {
     NVIM_BIN=$(command -v nvim || echo "")
     
     if [ -n "$NVIM_BIN" ]; then
-        # Exécute Mason/LSP/d'autres commandes pour installer les outils.
-        # Note: 'MasonInstallAll' est une hypothèse basée sur un setup Mason standard.
-        # Si vous utilisez un autre gestionnaire, ajustez la commande.
-        "$NVIM_BIN" --headless -c 'MasonToolsUpdate' -c 'MasonInstallAll' -c 'quitall' || warn "Échec de l'installation des outils Neovim. Vérifiez la configuration Mason/LSP."
-        ok "Installation des outils LSP/Formateurs/Linters terminée."
+        # Utilisation d'un appel Lua pour garantir que le plugin Mason est chargé avant d'exécuter ses commandes.
+        # Cela contourne les problèmes de timing de l'exécution HEADLESS.
+        local nvim_command='lua require("mason").setup(); 
+                           vim.cmd("MasonInstallAll");'
+
+        # On exécute Neovim en s'assurant qu'il termine correctement.
+        if "$NVIM_BIN" --headless -c "$nvim_command" -c 'qa'; then
+            ok "Installation des outils LSP/Formateurs/Linters terminée."
+        else
+            warn "Échec de l'installation des outils Neovim. Vérifiez la configuration Mason/LSP dans Neovim."
+        fi
     else
         warn "Binaire Neovim non trouvé. Installation des outils ignorée."
     fi
