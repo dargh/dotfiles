@@ -250,6 +250,21 @@ function sync_nvim_plugins() {
     fi
 }
 
+# --- 9. FONCTION : INSTALLATION DES SERVEURS LSP ET DES OUTILS ---
+function install_nvim_toolchain() {
+    log_step "nvim" "Installation des serveurs LSP, formateurs et linters (via Neovim)..."
+    NVIM_BIN=$(command -v nvim || echo "")
+    
+    if [ -n "$NVIM_BIN" ]; then
+        # Exécute Mason/LSP/d'autres commandes pour installer les outils.
+        # Note: 'MasonInstallAll' est une hypothèse basée sur un setup Mason standard.
+        # Si vous utilisez un autre gestionnaire, ajustez la commande.
+        "$NVIM_BIN" --headless -c 'MasonToolsUpdate' -c 'MasonInstallAll' -c 'quitall' || warn "Échec de l'installation des outils Neovim. Vérifiez la configuration Mason/LSP."
+        ok "Installation des outils LSP/Formateurs/Linters terminée."
+    else
+        warn "Binaire Neovim non trouvé. Installation des outils ignorée."
+    fi
+}
 
 # --- EXÉCUTION PRINCIPALE (ORDRE FINAL ET DÉFINITIF) ---
 echo
@@ -267,6 +282,7 @@ install_apps              # 5. Installe fzf, neovim, etc. via packages.*
 install_zsh               # 6. Installe Zsh et Oh My Zsh
 install_zsh_plugins       # 7. Installe les plugins Zsh (utilise Git)
 sync_nvim_plugins         # 8. Synchronise Neovim (utilise Neovim et Git)
+install_nvim_toolchain    # 9. Installe les serveurs de langage Neovim
 
 log_step "summary" "✅ Provisioning terminé avec succès !"
 echo
