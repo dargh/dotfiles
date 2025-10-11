@@ -38,6 +38,8 @@ else
     log "Le dépôt $DOTFILES_DIR existe déjà. Mise à jour..."
     (cd "$DOTFILES_DIR" && git remote set-url origin "$DOTFILES_REPO" && git pull) || error "Échec de la mise à jour du dépôt."
 fi
+log "Correction des permissions d'exécution pour install.sh..."
+chmod +x "$DOTFILES_DIR/install.sh"
 
 # --- 5. LANCEMENT DU SCRIPT DE PROVISIONNEMENT COMPLET ---
 log "Lancement du script de provisionnement complet ($DOTFILES_DIR/install.sh)..."
