@@ -1,12 +1,6 @@
 #!/bin/bash
 set -e
 
-# ----------------------------------------------------------------------
-# SCRIPT DE PROVISIONNEMENT COMPLET
-# Rôle: Installer tous les outils, configurer l'environnement (Zsh, Nvim, etc.).
-# Ce script est lancé par le bootstrap.sh
-# ----------------------------------------------------------------------
-
 # --- Couleurs et fonctions de log ---
 GREEN='\033[0;32m'; YELLOW='\033[0;33m'; RED='\033[0;31m'
 BLUE='\033[0;34m'; MAGENTA='\033[0;35m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -19,8 +13,24 @@ warn() { echo -e "$(date '+%H:%M:%S') ⚠️ ${YELLOW}$1${NC}"; }
 error() { echo -e "$(date '+%H:%M:%S') ❌ ${RED}$1${NC}"; exit 1; }
 
 # --- Variables Globales ---
+DOTFILES_REPO="" 
 DOTFILES_DIR="$HOME/.dotfiles"
 CONFIG_DIR="$HOME/.config"
+
+# --- 0. FONCTION : INVITE INTERACTIVE POUR L'URL ---
+function get_dotfiles_repo_url() {
+    log_step "dots" "Configuration de l'accès au dépôt privé (HTTPS/PAT)..."
+    echo -e "${YELLOW}Veuillez saisir les informations d'accès à votre dépôt dotfiles privé :${NC}"
+    read -p "  [?] Votre nom d'utilisateur GitHub : " GITHUB_USER
+    if [ -z "$GITHUB_USER" ]; then error "Nom d'utilisateur ne peut être vide."; fi
+    read -sp "  [?] Votre Personal Access Token (PAT) : " GITHUB_TOKEN
+    echo
+    if [ -z "$GITHUB_TOKEN" ]; then error "Token ne peut être vide."; fi
+    read -p "  [?] URL HTTPS du dépôt (ex: https://github.com/user/repo.git) : " REPO_BASE_URL
+    if [ -z "$REPO_BASE_URL" ]; then error "URL de dépôt ne peut être vide."; fi
+    DOTFILES_REPO=$(echo "$REPO_BASE_URL" | sed "s/https:\/\//https:\/\/$GITHUB_USER:$GITHUB_TOKEN@/")
+    ok "URL d'accès sécurisée configurée."
+}
 
 # --- 1. FONCTION : MISE À JOUR SYSTÈME ---
 function update_system() {
@@ -29,27 +39,29 @@ function update_system() {
     ok "Système à jour."
 }
 
-# --- 2. FONCTION : DÉPENDANCES ESSENTIELLES (Utilisées par Homebrew/Build) ---
+# --- 2. FONCTION : DÉPENDANCES ESSENTIELLES ---
 function install_core_dependencies() {
-    log_step "apps" "Installation des dépendances essentielles (curl, build-essential)..."
-    CORE_DEPS=(curl build-essential)
+    log_step "apps" "Installation des dépendances essentielles (git, curl, build-essential)..."
+    CORE_DEPS=(git curl build-essential)
     sudo apt update -qq
     sudo apt install -y "${CORE_DEPS[@]}" || error "Impossible d'installer les dépendances essentielles."
     ok "Dépendances essentielles installées."
 }
 
-# --- 3. FONCTION : DÉPLOIEMENT DES DOTFILES (Liens symboliques uniquement) ---
+# --- 3. FONCTION : DÉPLOIEMENT DES DOTFILES ---
 function deploy_dotfiles() {
-    log_step "dots" "Déploiement des liens symboliques."
-    
-    # Le bootstrap a déjà cloné/mis à jour le dépôt. On ne fait que les liens ici.
-    
-    if [ ! -d "$CONFIG_DIR" ]; then 
-        mkdir -p "$CONFIG_DIR"; 
-        ok "$CONFIG_DIR créé."
+    log_step "dots" "Clonage et déploiement du dépôt dotfiles."
+    if [ -z "$DOTFILES_REPO" ]; then error "L'URL du dépôt n'a pas été configurée."; fi
+
+    if [ -d "$DOTFILES_DIR" ]; then
+        log_step "dots" "Mise à jour du dépôt dotfiles existant..."
+        (cd "$DOTFILES_DIR" && git remote set-url origin "$DOTFILES_REPO" && git pull) || warn "Échec de la mise à jour du dépôt."
     else
-        ok "$CONFIG_DIR existe déjà."
+        log_step "dots" "Clonage du dépôt dotfiles..."
+        git clone --recurse-submodules "$DOTFILES_REPO" "$DOTFILES_DIR" || error "Échec du clonage."
     fi
+
+    if [ ! -d "$CONFIG_DIR" ]; then mkdir -p "$CONFIG_DIR"; ok "$CONFIG_DIR créé."; fi
 
     log_step "dots" "Création des liens symboliques..."
     ln -snfv "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
@@ -59,7 +71,7 @@ function deploy_dotfiles() {
 
 # --- 4. FONCTION : INSTALLATION ET CONFIGURATION HOMEBREW ---
 function setup_homebrew() {
-    log_step "brew" "Vérification et configuration de l'environnement Homebrew..."
+    log_step "brew" "Vérification et configuration de l'environnement Homebrew (Multi-utilisateur)..."
     
     local brew_path="/home/linuxbrew/.linuxbrew/bin/brew"
     local brew_shellenv_line='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
@@ -96,7 +108,6 @@ function install_apps() {
     if [ -f "$BREW_PACKAGES_FILE" ]; then
         if command -v brew >/dev/null 2>&1; then
             log_step "apps" "Installation des outils via Homebrew depuis la liste..."
-            # Logique d'installation Brew...
             while read -r tool; do
                 if [[ "$tool" =~ ^\s*#.*$ ]] || [[ -z "$tool" ]]; then continue; fi
                 if brew list "$tool" &>/dev/null; then ok "$tool déjà présent"; else
@@ -174,40 +185,32 @@ function setup_neovim() {
         return
     fi
 
-    local temp_lua_script
-    temp_lua_script=$(mktemp) || error "Impossible de créer un fichier temporaire pour Neovim."
+    # 1. Assure que Packer est installé
+    local packer_install_path="$HOME/.local/share/nvim/site/pack/packer/start/packer.nvim"
+    if [ ! -d "$packer_install_path" ]; then
+        log_step "nvim" "Installation initiale de Packer.nvim..."
+        git clone --depth 1 https://github.com/wbthomason/packer.nvim "$packer_install_path" || warn "Échec de l'installation de Packer."
+    fi
+
+    # 2. Exécute la synchronisation via une simple commande Vimscript.
+    log_step "nvim" "Synchronisation des plugins (PackerSync)..."
     
-    # Le script Lua minimal pour s'assurer que Packer est là et synchronisé
-    cat <<'EOF' > "$temp_lua_script"
-vim.notify('Démarrage du setup Neovim...', vim.log.levels.INFO)
-
--- S'assure que Packer est installé
-local fn = vim.fn
-local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
-if fn.empty(fn.glob(install_path)) > 0 then
-  vim.notify('Installation de Packer.nvim...', vim.log.levels.INFO)
-  fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
-  vim.cmd 'packadd packer.nvim'
-end
-
-vim.notify('Synchronisation des plugins (PackerSync)...', vim.log.levels.INFO)
-pcall(require('packer').sync)
-vim.notify('PackerSync terminé.', vim.log.levels.INFO)
-EOF
-
-    # Exécution de Neovim
-    if "$NVIM_BIN" --headless -S "$temp_lua_script" -c 'qa!'; then
+    # Exécution de PackerSync en mode headless. Cette commande quitte automatiquement une fois terminée.
+    if "$NVIM_BIN" --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'; then
         ok "Plugins Neovim synchronisés avec succès."
     else
-        error "Une erreur est survenue lors de la synchronisation des plugins Neovim."
+        # Cette erreur ne se déclenchera que si le processus nvim lui-même échoue (ex: introuvable).
+        # Les erreurs Lua internes ne sont pas capturées ici, ce qui est le comportement que vous aviez et qui fonctionnait.
+        error "Une erreur est survenue lors du lancement de Neovim pour la synchronisation."
     fi
-    
-    rm "$temp_lua_script"
 }
+
 
 # --- EXÉCUTION PRINCIPALE ---
 echo
-log_step "system" "=== Démarrage du provisionnement de la machine Debian ==="
+log_step "system" "=== Début du provisioning de la machine Debian ==="
+
+get_dotfiles_repo_url
 
 update_system
 install_core_dependencies
