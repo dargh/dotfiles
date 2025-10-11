@@ -8,12 +8,14 @@ local on_attach = function(client, bufnr)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
 end
 
-local servers = { 'bashls', 'lua_ls' }
-for _, server_name in ipairs(servers) do
-    vim.lsp.start({
-        name = server_name,
-        cmd = require('lspconfig')[server_name].document_config.default_config.cmd,
-        on_attach = on_attach,
-        root_dir = require('lspconfig.util').root_pattern('.git', vim.fn.getcwd()),
-    })
+local servers = {
+    bashls = { cmd = { "bash-language-server", "start" } },
+    lua_ls = { cmd = { "lua-language-server" } },
+}
+
+for name, opts in pairs(servers) do
+    opts.name = name
+    opts.on_attach = on_attach
+    opts.root_dir = vim.fn.getcwd()
+    vim.lsp.start(opts)
 end
