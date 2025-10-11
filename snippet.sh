@@ -4,7 +4,7 @@ read -sp "Token : " GITHUB_PAT
 echo
 
 # 2. Définition de l'URL du bootstrap (À REMPLACER)
-BOOTSTRAP_URL="https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/bootstrap.sh"
+BOOTSTRAP_URL="https://raw.githubusercontent.com/dargh/dotfiles/main/bootstrap.sh"
 
 # 3. Exécution du script avec une tentative Curl, puis Wget en cas d'échec
 if command -v curl >/dev/null 2>&1; then
