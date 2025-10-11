@@ -12,9 +12,6 @@ error() { echo -e "\n\033[0;31m[ERREUR]\033[0m $1"; exit 1; }
 DOTFILES_REPO="${1:-}"
 DOTFILES_DIR="$HOME/.dotfiles"
 
-# Debug : afficher la valeur reçue
-log "[DEBUG] Argument reçu pour l'URL du dépôt : '$DOTFILES_REPO'"
-
 if [ -z "$DOTFILES_REPO" ]; then
     error "URL de dépôt non fournie au script bootstrap."
 fi

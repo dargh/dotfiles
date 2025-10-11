@@ -13,7 +13,13 @@ warn() { echo -e "$(date '+%H:%M:%S') ⚠️ ${YELLOW}$1${NC}"; }
 error() { echo -e "$(date '+%H:%M:%S') ❌ ${RED}$1${NC}"; exit 1; }
 
 # --- Variables Globales ---
-DOTFILES_REPO="" 
+# Si un argument est passé, on l'utilise comme URL du dépôt (cas bootstrap)
+if [ -n "$1" ]; then
+    DOTFILES_REPO="$1"
+    echo -e "\n[DEBUG] DOTFILES_REPO reçu en argument : '$DOTFILES_REPO'"
+else
+    DOTFILES_REPO=""
+fi
 DOTFILES_DIR="$HOME/.dotfiles"
 CONFIG_DIR="$HOME/.config"
 
