@@ -4,7 +4,7 @@
 # Rôle: Installer Git, demander les identifiants, et cloner le dépôt privé.
 # ----------------------------------------------------------------------
 
-DOTFILES_REPO_BASE="https://github.com/VOTRE_UTILISATEUR/VOTRE_DEPOT.git" # <-- REMPLACEZ PAR L'URL HTTPS DE VOTRE DÉPÔT
+DOTFILES_REPO_BASE="https://github.com/dargh/dotfiles.git"
 DOTFILES_DIR="$HOME/.dotfiles"
 
 # --- 1. FONCTIONS DE LOG SIMPLIFIÉES ---
