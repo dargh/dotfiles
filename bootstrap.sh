@@ -9,8 +9,11 @@ log() { echo -e "\n\033[0;34m[INFO]\033[0m $1"; }
 error() { echo -e "\n\033[0;31m[ERREUR]\033[0m $1"; exit 1; }
 
 # Récupération des variables passées par le snippet de lancement
-DOTFILES_REPO="$1"
+DOTFILES_REPO="${1:-}"
 DOTFILES_DIR="$HOME/.dotfiles"
+
+# Debug : afficher la valeur reçue
+log "[DEBUG] Argument reçu pour l'URL du dépôt : '$DOTFILES_REPO'"
 
 if [ -z "$DOTFILES_REPO" ]; then
     error "URL de dépôt non fournie au script bootstrap."

@@ -1,8 +1,8 @@
+#!/bin/bash
 # ----------------------------------------------------------------------
 # SNIPPET DE LANCEMENT FINAL ET CORRIGÉ (À utiliser sur le client)
-# REMPLACER MON_USER
 # ----------------------------------------------------------------------
-GITHUB_USER="dargh" # <-- REMPLACER
+GITHUB_USER="dargh" # <-- REMPLACER VOTRE NOM D'UTILISATEUR
 REPO_BASE_URL="https://github.com/dargh/dotfiles.git" # <-- REMPLACER
 
 # 1. Demande sécurisée du Personal Access Token (PAT)
@@ -10,14 +10,16 @@ echo -e "\n\033[0;33mVeuillez saisir votre Personal Access Token (PAT) GitHub po
 read -sp "Token : " GITHUB_PAT
 echo
 
-# 2. Construction de l'URL sécurisée pour le clonage (inclut l'utilisateur et le PAT)
-# On utilise printf %q pour un échappement parfait de l'URL
-SECURE_REPO_URL=$(printf "%q" "$(echo "$REPO_BASE_URL" | sed "s/https:\/\//https:\/\/$GITHUB_USER:$GITHUB_PAT@/")")
+SECURE_REPO_URL=$(echo "$REPO_BASE_URL" | sed "s/https:\/\//https:\/\/$GITHUB_USER:$GITHUB_PAT@/")
 
-# 3. Définition de l'URL brute du bootstrap (pour le curl initial)
-BOOTSTRAP_URL="https://raw.githubusercontent.com/$GITHUB_USER/dotfiles/main/bootstrap.sh"
 
-# 4. Exécution du script avec dépendances et passage de l'URL sécurisée
+# Utilisation de l'API GitHub pour récupérer bootstrap.sh (compatible dépôt privé)
+BOOTSTRAP_API_URL="https://api.github.com/repos/$GITHUB_USER/dotfiles/contents/bootstrap.sh?ref=main"
+
+
+# Construction de la commande avec authentification pour l'API GitHub et passage correct de l'argument
+CMD_TO_EXECUTE=$(printf '/bin/bash -c "$(curl -fsSL -H \"Authorization: token %s\" -H \"Accept: application/vnd.github.v3.raw\" %s)" -- %q' "$GITHUB_PAT" "$BOOTSTRAP_API_URL" "$SECURE_REPO_URL")
+
 /bin/bash -c "
 # Installer curl si manquant
 if ! command -v curl >/dev/null 2>&1; then
@@ -27,8 +29,6 @@ if ! command -v curl >/dev/null 2>&1; then
     }
 fi
 
-# Télécharger le bootstrap et le lancer.
-# L'argument \$SECURE_REPO_URL est transmis en dehors de la sous-commande \$(...)
-# en utilisant une commande "heredoc" temporaire pour garantir la bonne interprétation
-/bin/bash -c \"\$(curl -fsSL -H 'Authorization: Bearer $GITHUB_PAT' '$BOOTSTRAP_URL')\" $SECURE_REPO_URL
+# Exécuter la commande finale
+$CMD_TO_EXECUTE
 "
