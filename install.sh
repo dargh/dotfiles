@@ -143,6 +143,31 @@ function install_apps() {
         curl -L "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip" -o "$TEMP_ZIP"
         unzip -q "$TEMP_ZIP" -d "$FONT_DIR/FiraCode"; rm "$TEMP_ZIP"; fc-cache -fv >/dev/null; ok "Police FiraCode installée."
     fi
+
+    # Installation automatique des serveurs LSP nécessaires
+    log_step "apps" "Installation de bash-language-server (npm) si absent..."
+    if ! command -v bash-language-server >/dev/null 2>&1; then
+        if command -v npm >/dev/null 2>&1; then
+            npm install -g bash-language-server && ok "bash-language-server installé."
+        else
+            warn "npm non trouvé, bash-language-server non installé. Installez Node.js et npm pour le support Bash LSP."
+        fi
+    else
+        ok "bash-language-server déjà présent."
+    fi
+
+    log_step "apps" "Installation de lua-language-server (apt ou brew) si absent..."
+    if ! command -v lua-language-server >/dev/null 2>&1; then
+        if command -v apt >/dev/null 2>&1; then
+            sudo apt update -qq && sudo apt install -y lua-language-server && ok "lua-language-server installé (apt)."
+        elif command -v brew >/dev/null 2>&1; then
+            brew install lua-language-server && ok "lua-language-server installé (brew)."
+        else
+            warn "Ni apt ni brew trouvés, lua-language-server non installé. Installez-le manuellement pour le support Lua LSP."
+        fi
+    else
+        ok "lua-language-server déjà présent."
+    fi
 }
 
 # --- 6. FONCTION : INSTALLATION DE ZSH ET SES PLUGINS ---
