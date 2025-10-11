@@ -210,8 +210,6 @@ function setup_neovim() {
 echo
 log_step "system" "=== Début du provisioning de la machine Debian ==="
 
-get_dotfiles_repo_url
-
 update_system
 install_core_dependencies
 deploy_dotfiles
