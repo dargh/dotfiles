@@ -203,6 +203,7 @@ function setup_neovim() {
     
     # Exécution de PackerSync en mode headless. Cette commande quitte automatiquement une fois terminée.
     if "$NVIM_BIN" --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'; then
+        echo
         ok "Plugins Neovim synchronisés avec succès."
     else
         # Cette erreur ne se déclenchera que si le processus nvim lui-même échoue (ex: introuvable).
