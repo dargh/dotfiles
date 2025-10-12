@@ -48,10 +48,16 @@ function update_system() {
 # --- 2. FONCTION : DÉPENDANCES ESSENTIELLES ---
 function install_core_dependencies() {
     log_step "apps" "Installation des dépendances essentielles (git, curl, build-essential)..."
-    CORE_DEPS=(git curl build-essential)
-    sudo apt update -qq
-    sudo apt install -y "${CORE_DEPS[@]}" || error "Impossible d'installer les dépendances essentielles."
-    ok "Dépendances essentielles installées."
+    if command -v brew >/dev/null 2>&1; then
+        log_step "apps" "Installation des outils de base via Homebrew..."
+        brew install git curl build-essential || warn "Certains outils n'ont pas pu être installés via brew."
+        ok "Outils de base installés via Homebrew."
+    else
+        CORE_DEPS=(git curl build-essential)
+        sudo apt update -qq
+        sudo apt install -y "${CORE_DEPS[@]}" || error "Impossible d'installer les dépendances essentielles."
+        ok "Dépendances essentielles installées."
+    fi
 }
 
 # --- 3. FONCTION : DÉPLOIEMENT DES DOTFILES ---
@@ -197,6 +203,9 @@ function install_zsh_and_plugins() {
         ["zsh-syntax-highlighting"]="https://github.com/zsh-users/zsh-syntax-highlighting.git"
         ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab.git"
         ["zsh-completions"]="https://github.com/zsh-users/zsh-completions.git"
+        # Plugins Docker (Oh My Zsh les fournit en interne, mais on force le clone si besoin)
+        ["docker"]="https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/docker"
+        ["docker-compose"]="https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/docker-compose"
     )
     for name in "${!plugins_repos[@]}"; do
         if [ ! -d "$plugins_dir/$name" ]; then
