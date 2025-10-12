@@ -210,9 +210,6 @@ function install_zsh_and_plugins() {
         ["zsh-syntax-highlighting"]="https://github.com/zsh-users/zsh-syntax-highlighting.git"
         ["fzf-tab"]="https://github.com/Aloxaf/fzf-tab.git"
         ["zsh-completions"]="https://github.com/zsh-users/zsh-completions.git"
-        # Plugins Docker (Oh My Zsh les fournit en interne, mais on force le clone si besoin)
-        ["docker"]="https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/docker"
-        ["docker-compose"]="https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/docker-compose"
     )
     for name in "${!plugins_repos[@]}"; do
         if [ ! -d "$plugins_dir/$name" ]; then
