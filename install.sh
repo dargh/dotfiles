@@ -250,20 +250,6 @@ function setup_neovim() {
     fi
 }
 
-
-# --- EXÉCUTION PRINCIPALE ---
-echo
-log_step "system" "=== Début du provisioning de la machine Debian ==="
-
-update_system
-install_core_dependencies
-deploy_dotfiles
-setup_homebrew
-install_apps
-install_zsh_and_plugins
-
-setup_neovim
-
 # --- 8. INSTALLATION DE COCKPIT (interface web d'administration) ---
 function install_cockpit() {
     log_step "apps" "Installation de Cockpit (interface web d'administration)..."
@@ -277,6 +263,17 @@ function install_cockpit() {
     sudo systemctl enable --now cockpit.socket
 }
 
+# --- EXÉCUTION PRINCIPALE ---
+echo
+log_step "system" "=== Début du provisioning de la machine Debian ==="
+
+update_system
+install_core_dependencies
+deploy_dotfiles
+setup_homebrew
+install_apps
+install_zsh_and_plugins
+setup_neovim
 install_cockpit
 
 log_step "summary" "✅ Provisioning terminé avec succès !"
