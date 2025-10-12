@@ -261,7 +261,23 @@ deploy_dotfiles
 setup_homebrew
 install_apps
 install_zsh_and_plugins
+
 setup_neovim
+
+# --- 8. INSTALLATION DE COCKPIT (interface web d'administration) ---
+function install_cockpit() {
+    log_step "apps" "Installation de Cockpit (interface web d'administration)..."
+    if command -v brew >/dev/null 2>&1; then
+        brew install cockpit || warn "Échec de l'installation de Cockpit via Homebrew."
+    else
+        sudo apt update -qq
+        sudo apt install -y cockpit || warn "Échec de l'installation de Cockpit via apt."
+    fi
+    ok "Cockpit installé. Accès via https://<ip>:9090 après démarrage du service."
+    sudo systemctl enable --now cockpit.socket
+}
+
+install_cockpit
 
 log_step "summary" "✅ Provisioning terminé avec succès !"
 echo
