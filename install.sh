@@ -154,7 +154,16 @@ function install_apps() {
     log_step "apps" "Installation de bash-language-server (npm) si absent..."
     if ! command -v bash-language-server >/dev/null 2>&1; then
         if command -v npm >/dev/null 2>&1; then
-            npm install -g bash-language-server && ok "bash-language-server installé."
+            if sudo -n true 2>/dev/null; then
+                sudo npm install -g bash-language-server && ok "bash-language-server installé (sudo)."
+            else
+                npm install --prefix "$HOME/.local" bash-language-server && ok "bash-language-server installé en local (user)."
+                # Ajout automatique de ~/.local/bin au PATH si absent
+                if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
+                    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"
+                    warn "~/.local/bin ajouté à votre PATH dans ~/.profile. Relancez votre shell ou source ~/.profile."
+                fi
+            fi
         else
             warn "npm non trouvé, bash-language-server non installé. Installez Node.js et npm pour le support Bash LSP."
         fi
@@ -162,14 +171,12 @@ function install_apps() {
         ok "bash-language-server déjà présent."
     fi
 
-    log_step "apps" "Installation de lua-language-server (apt ou brew) si absent..."
+    log_step "apps" "Installation de lua-language-server (brew prioritaire, sinon aide) si absent..."
     if ! command -v lua-language-server >/dev/null 2>&1; then
-        if command -v apt >/dev/null 2>&1; then
-            sudo apt update -qq && sudo apt install -y lua-language-server && ok "lua-language-server installé (apt)."
-        elif command -v brew >/dev/null 2>&1; then
+        if command -v brew >/dev/null 2>&1; then
             brew install lua-language-server && ok "lua-language-server installé (brew)."
         else
-            warn "Ni apt ni brew trouvés, lua-language-server non installé. Installez-le manuellement pour le support Lua LSP."
+            warn "lua-language-server non trouvé. Installez-le manuellement (voir https://github.com/LuaLS/lua-language-server#installation) ou via Homebrew si possible."
         fi
     else
         ok "lua-language-server déjà présent."
