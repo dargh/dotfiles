@@ -22,7 +22,7 @@ fi
 chsh -s "$ZSH_PATH" || error "Échec du changement de shell par défaut"
 
 log_step apps "Installation des outils via Homebrew..."
-brew install zoxide starship bat lazygit lsd fzf ripgrep btop fd duf gdu atuin procs tlrc yazi helix tailspin 7zip || error "Échec de l'installation des outils"
+brew install zoxide starship bat lazygit lsd fzf ripgrep btop fd duf gdu atuin procs tlrc yazi helix 7zip || error "Échec de l'installation des outils"
 
 log_step dots "Sauvegarde de l'ancien .zshrc..."
 cp ~/.zshrc ~/.zshrc.backup.$(date +%s) 2>/dev/null && ok ".zshrc sauvegardé" || warn "Aucun .zshrc à sauvegarder"
