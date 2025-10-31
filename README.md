@@ -9,4 +9,4 @@ Bienvenue dans mon dépôt de dotfiles. Ce projet automatise l'installation d'un
 Lance cette commande depuis un terminal **bash** sur une machine fraîche :
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/dargh/dotfiles/main/setup.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/dargh/dotfiles/main/scripts/setup.sh)"

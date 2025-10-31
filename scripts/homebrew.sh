@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-source <(curl -fsSL https://raw.githubusercontent.com/<user>/dotfiles/main/lib/logger.sh)
+# --- Configuration ---
+GIT_USER="dargh"
+
+source <(curl -fsSL https://raw.githubusercontent.com/$GIT_USER/dotfiles/main/lib/logger.sh)
 
 log_step brew "Installation de Homebrew..."
 NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error "Échec de l'installation de Homebrew"

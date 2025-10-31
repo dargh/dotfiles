@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-source <(curl -fsSL https://raw.githubusercontent.com/<user>/dotfiles/main/lib/logger.sh)
+# --- Configuration ---
+GIT_USER="dargh"
 
-REPO="https://github.com/<user>/dotfiles"
+source <(curl -fsSL https://raw.githubusercontent.com/$GIT_USER/dotfiles/main/lib/logger.sh)
+
+REPO="https://github.com/$GIT_USER/dotfiles"
 TARGET="$HOME/.dotfiles"
 
 log_step dots "Clonage du dépôt dotfiles..."
