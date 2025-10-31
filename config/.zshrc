@@ -60,6 +60,9 @@ bindkey '^R' atuin-search  # remplace Ctrl-R par la recherche Atuin
 ### │ Fzf: fuzzy finder                          │
 ### └────────────────────────────────────────────┘
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always {} | head -100'"
 
 ### ┌────────────────────────────────────────────┐
 ### │ VS Code: ouverture rapide + complétions    │
@@ -76,7 +79,10 @@ export VISUAL="hx"
 ### ┌────────────────────────────────────────────┐
 ### │ Remplacement de less                       │
 ### └────────────────────────────────────────────┘
-alias less='talespin'  # Pager moderne (si installé)
+alias less='bat --paging=always' # Remplace less par bat
+alias cat='bat'           # Affiche avec syntaxe
+export BAT_THEME="TwoDark"
+export BAT_STYLE="plain"
 
 ### ┌────────────────────────────────────────────┐
 ### │ Historique enrichi et propre               │
@@ -135,7 +141,6 @@ alias reload='source ~/.zshrc'  # Recharge la config
 alias ls='lsd'            # Liste avec icônes
 alias ll='lsd -l'         # Liste détaillée
 alias la='lsd -la'        # Liste tous les fichiers
-alias cat='bat'           # Affiche avec syntaxe
 alias grep='rg'           # Recherche rapide
 alias find='fd'           # Recherche de fichiers
 alias df='duf'            # Affiche l’espace disque
