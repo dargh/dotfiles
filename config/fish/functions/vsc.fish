@@ -1,0 +1,3 @@
+function vsc
+     code .; 
+end

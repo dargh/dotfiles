@@ -16,4 +16,5 @@ log_step brew "Installation de Homebrew et des outils..."
 bash <(curl -fsSL https://raw.githubusercontent.com/$GIT_USER/dotfiles/main/scripts/homebrew.sh)
 
 log_step summary "Installation terminée. Lancement de Zsh..."
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 exec "$(brew --prefix)/bin/zsh"
