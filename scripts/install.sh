@@ -134,7 +134,7 @@ function configure-starship() {
   log-step font "Configuration du thème Starship..."
   mkdir -p "$HOME/.config"
   CLONE_DIR="$HOME/dotfiles"
-  cp "$CLONE_DIR/config/starship/starship.toml" "$HOME/.config/starship.toml" || error "Échec de la copie de la configuration Starship"
+  cp "$CLONE_DIR/config/starship.toml" "$HOME/.config/starship.toml" || error "Échec de la copie de la configuration Starship"
   ok "Thème Starship configuré"
 }
 
